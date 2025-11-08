@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: xiaozhi-webrtc
+    runtime: docker
+    region: singapore
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 8080
+    healthCheckPath: /

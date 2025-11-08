@@ -24,6 +24,8 @@ COPY ./src ./src
 
 COPY ./main.py ./main.py
 
-EXPOSE ${PORT:-51000}
+EXPOSE 8080
+
+ENV PORT=8080
 
 CMD ["uv", "run", "main.py"]
