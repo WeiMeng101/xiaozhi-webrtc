@@ -1,0 +1,16 @@
+{
+  "name": "xiaozhi-webrtc",
+  "services": [
+    {
+      "name": "xiaozhi-webrtc",
+      "type": "docker",
+      "dockerfile": "Dockerfile",
+      "ports": [
+        {
+          "port": 8080,
+          "protocol": "http"
+        }
+      ]
+    }
+  ]
+}
