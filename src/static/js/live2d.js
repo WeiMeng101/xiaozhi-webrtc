@@ -276,7 +276,8 @@ class Live2DManager {
                 this.analyser.getByteFrequencyData(this.dataArray);
                 const average = this.dataArray.reduce((a, b) => a + b) / this.dataArray.length;
                 // 将0-255的值转换为0-1的范围，并应用一些平滑处理
-                mouthValue = Math.min(1, (average / 255) * 3);
+                mouthValue =  Math.pow(Math.min(1, (average / 255) * 3), 2);
+                // console.log("mouthValue", mouthValue, average)
             }
             // console.log("mouthValue", mouthValue)
             coreModel.setParameterValueById(this.mouthParam, mouthValue);
