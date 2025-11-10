@@ -35,7 +35,11 @@ class XiaoZhiServer(object):
 
     async def start(self):
         self.server = XiaoZhiWebsocket(
-            self.message_handler_callback, ota_url=OTA_URL, audio_sample_rate=48000, audio_channels=2
+            self.message_handler_callback,
+            ota_url=OTA_URL,
+            audio_sample_rate=48000,
+            audio_channels=2,
+            audio_frame_duration=20,
         )
         await self.server.set_mcp_tool(self.mcp_tool_func())
         await self.server.init_connection(self.pc.mac_address)
