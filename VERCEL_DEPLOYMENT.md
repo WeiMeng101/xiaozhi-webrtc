@@ -55,11 +55,11 @@ vercel deploy --prod
 5. 点击 "Deploy"
 6. 等待自动部署完成
 
-### 3. 配置环境变量
+### 配置环境变量
 
 在 Vercel Dashboard 中：
 
-1. 进入项目设置 > Environment Variables
+1. 进入项目设置 → "Environment Variables"
 2. 添加需要的环境变量：
    - `PORT`：通常不需要修改，Vercel 会自动设置
    - 其他项目特有的环境变量（如果有）
