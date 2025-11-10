@@ -1,0 +1,15 @@
+.git
+.github
+.vscode
+.claude
+docs
+*.md
+.gitignore
+.pre-commit-config.yaml
+Caddyfile
+deploy*.sh
+setup-cloudflare-tunnel.sh
+fly.toml
+render.yaml
+zeabur.json
+docker-compose.yml

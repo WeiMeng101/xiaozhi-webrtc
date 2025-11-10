@@ -1,0 +1,12 @@
+{
+  "name": "xiaozhi-webrtc",
+  "version": 2,
+  "buildCommand": "pip install uv && uv sync",
+  "devCommand": "uv run main.py",
+  "env": {
+    "PORT": "3000",
+    "HOST": "0.0.0.0"
+  },
+  "public": true,
+  "regions": ["sfo1"]
+}
