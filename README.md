@@ -96,6 +96,8 @@ WebRTC 需要以下端口用于实时音视频通信：
 
 **注意**: 生产环境必须使用 HTTPS，否则 WebRTC 功能将无法正常工作。
 
+> Tip: 如果你只在受控环境（如同一局域网）部署并希望避免频繁连接默认 TURN，可以在启动时设置 `ENABLE_DEFAULT_TURN_SERVERS=0`，这样只使用 STUN，必要时仍可用 `TURN_SERVER_*` 自定义中继。
+
 ---
 ## 🫡 致敬
 - 虾哥 [xiaozhi-esp32](https://github.com/78/xiaozhi-esp32) 项目

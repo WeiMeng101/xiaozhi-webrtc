@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.9"
 resolution-markers = [
     "python_full_version >= '3.12' and sys_platform == 'darwin'",
@@ -2153,7 +2153,7 @@ wheels = [
 
 [[package]]
 name = "xiaozhi-sdk"
-version = "0.2.9"
+version = "0.4.6"
 source = { registry = "https://pypi.tuna.tsinghua.edu.cn/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -2174,9 +2174,9 @@ dependencies = [
     { name = "soundfile" },
     { name = "websockets" },
 ]
-sdist = { url = "https://pypi.tuna.tsinghua.edu.cn/packages/9a/92/7629cfa944c743fad882ba0360c79bc8e112f112b33168c0561a65fdc5aa/xiaozhi_sdk-0.2.9.tar.gz", hash = "sha256:3e621646f57c06fe3a076a008370981ca7935da77d2fa2ff6c0f712a4e96d9e9", size = 1795344, upload-time = "2025-10-20T14:22:23.188Z" }
+sdist = { url = "https://pypi.tuna.tsinghua.edu.cn/packages/73/84/1f170b4993365fd70f062d2da2511d6afb5b55c6bf6b14c64c1e3a33ed19/xiaozhi_sdk-0.4.6.tar.gz", hash = "sha256:e135fae42eeb9e3b6d0e848e86e4241d1b623f4ce599e4611233826ff184edab", size = 1797676, upload-time = "2025-11-23T15:17:41.276Z" }
 wheels = [
-    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/85/1b/a99da0fa9b2639a4bb43f8626716d58685e245c972f9f079953c863546f6/xiaozhi_sdk-0.2.9-py3-none-any.whl", hash = "sha256:ce04b3b873f000051d1590d7225e11f9129d5c5bc380dc096a6338ffa45c1178", size = 1793010, upload-time = "2025-10-20T14:22:21.343Z" },
+    { url = "https://pypi.tuna.tsinghua.edu.cn/packages/b9/0b/56fe4f13458249f20f23c1025bea58bd1baa8ee82b8f859e9a4c560bb394/xiaozhi_sdk-0.4.6-py3-none-any.whl", hash = "sha256:b1876412be50b599ee73033b3bc3c6f994b7c9dfcd9d6eee6fbfd764ad28a362", size = 1797020, upload-time = "2025-11-23T15:17:39.418Z" },
 ]
 
 [[package]]
@@ -2201,7 +2201,7 @@ dependencies = [
     { name = "xiaozhi-sdk" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "black" },
     { name = "flake8" },
@@ -2209,37 +2209,26 @@ dev = [
     { name = "pytest" },
 ]
 
-[package.dev-dependencies]
-dev = [
-    { name = "black" },
-    { name = "flake8" },
-    { name = "pytest" },
-]
-
 [package.metadata]
 requires-dist = [
     { name = "aiortc", specifier = ">=1.13.0" },
     { name = "av", specifier = ">=12.0.0" },
-    { name = "black", marker = "extra == 'dev'" },
-    { name = "flake8", marker = "extra == 'dev'" },
-    { name = "mypy", marker = "extra == 'dev'" },
     { name = "numpy", specifier = ">=2.0.0" },
     { name = "opencv-python", specifier = ">=4.8.0" },
     { name = "opuslib", specifier = ">=3.0.0" },
     { name = "pillow", specifier = ">=10.0.0" },
-    { name = "pytest", marker = "extra == 'dev'" },
     { name = "python-socks", specifier = ">=2.7.0" },
     { name = "requests", specifier = ">=2.31.0" },
     { name = "sounddevice", specifier = ">=0.5.0" },
     { name = "websockets", specifier = ">=11.0.3" },
     { name = "xiaozhi-sdk", specifier = ">=0.2.9" },
 ]
-provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "black", specifier = ">=23.0" },
     { name = "flake8", specifier = ">=6.0" },
+    { name = "mypy" },
     { name = "pytest", specifier = ">=7.0" },
 ]
 
