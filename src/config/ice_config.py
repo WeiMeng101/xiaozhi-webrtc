@@ -19,19 +19,22 @@ class ICEConfig:
         ]
 
         # TURN服务器配置（优先使用环境变量,否则使用公共服务器）
-        custom_turn = os.getenv("TURN_SERVER_URL")
+        custom_turn_raw = os.getenv("TURN_SERVER_URL")
         custom_turn_user = os.getenv("TURN_USERNAME")
-        custom_turn_cred = os.getenv("TURN_CREDENTIAL")
+        # 兼容部分部署使用 TURN_PASSWORD 变量
+        custom_turn_cred = os.getenv("TURN_CREDENTIAL") or os.getenv("TURN_PASSWORD")
 
-        if custom_turn and custom_turn_user and custom_turn_cred:
-            # 使用自定义TURN服务器
-            self.turn_servers = [
-                {
-                    "urls": custom_turn,
-                    "username": custom_turn_user,
-                    "credential": custom_turn_cred,
-                }
-            ]
+        self.turn_servers = []
+
+        if custom_turn_raw and custom_turn_user and custom_turn_cred:
+            # 支持逗号分隔的多条 TURN URL（如同时提供 UDP/TCP）
+            for url in custom_turn_raw.split(","):
+                url = url.strip()
+                if not url:
+                    continue
+                self.turn_servers.append(
+                    {"urls": url, "username": custom_turn_user, "credential": custom_turn_cred}
+                )
         else:
             if self._enable_default_turn:
                 # 使用公共TURN服务器（多个备选）
@@ -69,8 +72,6 @@ class ICEConfig:
                         "credential": "openrelayproject",
                     },
                 ]
-            else:
-                self.turn_servers = []
 
     def _env_true(self, name: str, default: bool) -> bool:
         """解析类似于 ENABLE_xxx=1/true 的布尔环境变量"""

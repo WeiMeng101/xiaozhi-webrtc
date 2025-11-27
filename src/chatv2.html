@@ -200,6 +200,109 @@
             margin-right: 40px;
         }
 
+        /* 设备设置按钮与面板 */
+        .device-settings-btn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 1200;
+            background: rgba(0, 0, 0, 0.65);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+            backdrop-filter: blur(10px);
+        }
+
+        .device-settings-btn:hover {
+            background: rgba(0, 0, 0, 0.78);
+        }
+
+        .device-settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.28);
+            z-index: 1500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .device-settings-panel {
+            width: 360px;
+            max-width: 100%;
+            background: #fffbee;
+            border-radius: 16px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+            padding: 18px;
+        }
+
+        .device-settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .device-settings-section {
+            margin-bottom: 12px;
+        }
+
+        .device-settings-label {
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #333;
+        }
+
+        .device-settings-select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 10px;
+            border: 1px solid #ddd6a5;
+            background: #fff;
+            font-size: 14px;
+        }
+
+        .device-settings-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 6px;
+        }
+
+        .device-settings-close,
+        .device-settings-refresh {
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid #ddd6a5;
+            background: #f1e6aa;
+            cursor: pointer;
+        }
+
+        @media (max-width: 640px) {
+            .device-settings-btn {
+                top: 12px;
+                right: 12px;
+                padding: 8px 10px;
+            }
+
+            .device-settings-panel {
+                width: 100%;
+                max-width: 420px;
+            }
+        }
+
         @keyframes bubbleSlideIn {
             from {
                 opacity: 0;
@@ -671,6 +774,61 @@
                     {{ message.content }}
                 </div>
             </div>
+
+            <!-- 设备设置入口 -->
+            <button class="device-settings-btn" @click="showDeviceSettings = true">
+                🎧 设备
+            </button>
+
+            <!-- 设备设置弹层 -->
+            <div class="device-settings-modal" v-if="showDeviceSettings" @click.self="showDeviceSettings = false">
+                <div class="device-settings-panel">
+                    <div class="device-settings-header">
+                        <span>音频设备</span>
+                        <button class="device-settings-close" @click="showDeviceSettings = false">关闭</button>
+                    </div>
+
+                    <div class="device-settings-section">
+                        <div class="device-settings-label">麦克风</div>
+                        <select class="device-settings-select"
+                                v-model="selectedAudioDeviceId"
+                                @change="handleAudioDeviceChange">
+                            <option value="">系统默认麦克风</option>
+                            <option v-for="device in audioInputDevices"
+                                    :key="device.deviceId"
+                                    :value="device.deviceId">
+                                {{ device.label || `麦克风 ${device.deviceId.slice(0, 8)}` }}
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="device-settings-section">
+                        <div class="device-settings-label">扬声器</div>
+                        <template v-if="supportSinkId">
+                            <select class="device-settings-select"
+                                    v-model="selectedSpeakerDeviceId"
+                                    @change="handleSpeakerChange">
+                                <option value="">系统默认扬声器</option>
+                                <option v-for="device in audioOutputDevices"
+                                        :key="device.deviceId"
+                                        :value="device.deviceId">
+                                    {{ device.label || `扬声器 ${device.deviceId.slice(0, 8)}` }}
+                                </option>
+                            </select>
+                        </template>
+                        <template v-else>
+                            <div class="message-bubble assistant" style="margin:0;">
+                                当前环境不支持网页切换扬声器（如微信内置浏览器），将使用系统默认输出。
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="device-settings-actions">
+                        <button class="device-settings-refresh" @click="refreshAudioDevices">刷新设备</button>
+                        <button class="device-settings-close" @click="showDeviceSettings = false">完成</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -704,6 +862,8 @@
                 selectedAudioDeviceId: '', // 当前选择的音频设备ID
                 audioOutputDevices: [], // 可用的音频输出设备
                 selectedSpeakerDeviceId: '', // 当前选择的扬声器设备ID
+                showDeviceSettings: false,
+                supportSinkId: true,
                 // 拖拽相关状态
                 isDragging: false,
                 dragStart: { x: 0, y: 0 },
@@ -731,6 +891,8 @@
                 messageScrollStartTime: 0,
                 hasScrollableContent: false,
                 isVerticalScrolling: false,
+                mediaFallbackTried: false,
+                mediaErrorHintShown: false,
                 // 自适应音量控制
                 adaptiveVolumeControl: true,
                 maxVolume: 0.8, // 最大音量限制，防止回声
@@ -782,6 +944,15 @@
                 // 监听窗口大小变化
                 window.addEventListener('resize', this.handleWindowResize);
                 window.addEventListener('orientationchange', this.handleOrientationChange);
+
+                // 检测是否支持 setSinkId（微信等内核不支持）
+                const ua = navigator.userAgent || '';
+                this.supportSinkId = typeof HTMLMediaElement !== 'undefined'
+                    && typeof HTMLMediaElement.prototype.setSinkId === 'function'
+                    && !/MicroMessenger/i.test(ua);
+                if (!this.supportSinkId) {
+                    this.selectedSpeakerDeviceId = '';
+                }
 
                 // 添加全局滑动手势监听器（仅在移动设备上）
                 if (window.innerWidth <= 768) {
@@ -901,7 +1072,40 @@
                     deep: true
                 }
             },
+            watch: {
+                selectedAudioDeviceId(newVal) {
+                    try { localStorage.setItem('selectedAudioDeviceId', newVal || ''); } catch (_) {}
+                },
+                selectedSpeakerDeviceId(newVal) {
+                    try { localStorage.setItem('selectedSpeakerDeviceId', newVal || ''); } catch (_) {}
+                },
+                voiceMode(newVal) {
+                    try { localStorage.setItem('voiceMode', newVal || 'continuous'); } catch (_) {}
+                }
+            },
             methods: {
+                buildAudioConstraints() {
+                    return {
+                        echoCancellation: true,
+                        echoCancellationType: "system",
+                        noiseSuppression: true,
+                        autoGainControl: true,
+                        googEchoCancellation: true,
+                        googAutoGainControl: true,
+                        googNoiseSuppression: true,
+                        googHighpassFilter: true,
+                        googTypingNoiseDetection: true,
+                        googAudioMirroring: false,
+                        googEchoCancellation2: true,
+                        googDAEchoCancellation: true,
+                        googNoiseReduction: true,
+                        latency: 0.02,
+                        sampleRate: 48000,
+                        sampleSize: 16,
+                        channelCount: 1,
+                        ...(this.selectedAudioDeviceId ? { deviceId: { exact: this.selectedAudioDeviceId } } : {})
+                    };
+                },
                 async initializeMedia() {
                     try {
                         // 首先检查设备是否支持媒体设备访问
@@ -909,31 +1113,27 @@
                             throw new Error('UNSUPPORTED_BROWSER');
                         }
 
-                        // 音频配置
-                        const audioConstraints = {
-                            echoCancellation: true,
-                            echoCancellationType: "system", // 使用系统级回声消除
-                            noiseSuppression: true,
-                            autoGainControl: true,
-                            googEchoCancellation: true,
-                            googAutoGainControl: true,
-                            googNoiseSuppression: true,
-                            googHighpassFilter: true,
-                            googTypingNoiseDetection: true,
-                            googAudioMirroring: false,
-                            googEchoCancellation2: true, // 启用增强的回声消除
-                            googDAEchoCancellation: true, // 启用数字音频回声消除
-                            googNoiseReduction: true, // 额外的噪声抑制
-                            latency: 0.02, // 20ms延迟以改善回声消除效果
-                            sampleRate: 48000,
-                            sampleSize: 16,
-                            channelCount: 1
-                        };
+                        const createAudioConstraints = () => this.buildAudioConstraints();
 
-                        // 如果指定了音频设备，添加到约束中
+                        // 确保存储的麦克风仍然存在，避免无效 deviceId 触发 OverconstrainedError
                         if (this.selectedAudioDeviceId) {
-                            audioConstraints.deviceId = { exact: this.selectedAudioDeviceId };
+                            try {
+                                const devices = await navigator.mediaDevices.enumerateDevices();
+                                const hasUsableIds = devices.some(d => d.deviceId && d.deviceId !== 'default' && d.deviceId !== 'communications');
+                                if (hasUsableIds) {
+                                    const exists = devices.some(d => d.kind === 'audioinput' && d.deviceId === this.selectedAudioDeviceId);
+                                    if (!exists) {
+                                        console.warn('指定的音频输入设备不存在，将使用默认设备');
+                                        this.selectedAudioDeviceId = '';
+                                    }
+                                }
+                            } catch (deviceCheckError) {
+                                console.warn('验证音频输入设备可用性失败，使用默认麦克风', deviceCheckError);
+                            }
                         }
+
+                        // 音频配置
+                        let audioConstraints = createAudioConstraints();
 
                         // 尝试获取摄像头和音频
                         try {
@@ -950,6 +1150,7 @@
 
                         this.hasCamera = true;
                         this.audioOnlyMode = false;
+                        this.mediaFallbackTried = false;
                         this.cameraError = null;
 
                         // 如果是按住说话模式，初始时禁用音频轨道
@@ -962,6 +1163,7 @@
 
                             // 尝试仅音频模式
                             try {
+                                audioConstraints = createAudioConstraints();
                                 this.localStream = await navigator.mediaDevices.getUserMedia({
                                     video: false,
                                     audio: audioConstraints
@@ -969,6 +1171,7 @@
 
                                 this.hasCamera = false;
                                 this.audioOnlyMode = true;
+                                this.mediaFallbackTried = false;
                                 this.cameraError = this.getCameraErrorMessage(videoError);
 
                                 // 如果是按住说话模式，初始时禁用音频轨道
@@ -989,6 +1192,52 @@
                         }
 
                     } catch (error) {
+                        // 如果是配置不支持类错误，尝试一次最简约束兜底
+                        const isConstraintError = ['OverconstrainedError', 'ConstraintNotSatisfiedError', 'NotReadableError'].includes(error.name);
+                        const failedConstraint = error.constraint || error.constraintName;
+
+                        if (isConstraintError && failedConstraint === 'deviceId' && this.selectedAudioDeviceId) {
+                            console.warn('选定的麦克风不可用，重置为默认设备后重试');
+                            this.selectedAudioDeviceId = '';
+                            try {
+                                const retryAudioConstraints = createAudioConstraints();
+                                const retryVideoConstraints = {
+                                    width: 640,
+                                    height: 480,
+                                    facingMode: this.preferredFacingMode
+                                };
+                                this.localStream = await navigator.mediaDevices.getUserMedia({
+                                    video: retryVideoConstraints,
+                                    audio: retryAudioConstraints
+                                });
+                                this.hasCamera = true;
+                                this.audioOnlyMode = false;
+                                this.cameraError = null;
+                                if (this.voiceMode === 'push-to-talk') {
+                                    this.disableAudioTrack();
+                                }
+                                return;
+                            } catch (retryWithDefaultError) {
+                                error = retryWithDefaultError;
+                            }
+                        }
+
+                        if (isConstraintError && !this.mediaFallbackTried) {
+                            this.mediaFallbackTried = true;
+                            try {
+                                this.localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                                this.hasCamera = true;
+                                this.audioOnlyMode = false;
+                                this.cameraError = null;
+                                if (this.voiceMode === 'push-to-talk') {
+                                    this.disableAudioTrack();
+                                }
+                                return;
+                            } catch (fallbackError) {
+                                error = fallbackError;
+                            }
+                        }
+
                         console.error('Error accessing media devices:', error);
                         this.cameraError = this.getCameraErrorMessage(error);
                         this.hasCamera = false;
@@ -1001,6 +1250,10 @@
                 },
 
                 getCameraErrorMessage(error) {
+                    const constraintName = error && (error.constraint || error.constraintName);
+                    if ((error?.name === 'OverconstrainedError' || error?.name === 'ConstraintNotSatisfiedError') && constraintName === 'deviceId') {
+                        return '指定的设备已不可用';
+                    }
                     switch (error.name || error.message) {
                         case 'NotAllowedError':
                         case 'PermissionDeniedError':
@@ -1028,25 +1281,30 @@
                 showMediaError(error) {
                     const errorMsg = this.getCameraErrorMessage(error);
                     let userMessage = '';
+                    const constraintName = error && (error.constraint || error.constraintName);
 
-                    switch (error.name || error.message) {
-                        case 'NotAllowedError':
-                        case 'PermissionDeniedError':
-                            userMessage = '请允许访问摄像头和麦克风权限，然后刷新页面重试';
-                            break;
-                        case 'NotFoundError':
-                        case 'DevicesNotFoundError':
-                            userMessage = '未检测到摄像头或麦克风设备，请检查设备连接';
-                            break;
-                        case 'NotReadableError':
-                        case 'TrackStartError':
-                            userMessage = '摄像头或麦克风被其他应用占用，请关闭其他应用后重试';
-                            break;
-                        case 'UNSUPPORTED_BROWSER':
-                            userMessage = '当前浏览器版本过低，请升级到最新版本';
-                            break;
-                        default:
-                            userMessage = '媒体设备访问失败，请检查设备权限和连接状态';
+                    if ((error?.name === 'OverconstrainedError' || error?.name === 'ConstraintNotSatisfiedError') && constraintName === 'deviceId') {
+                        userMessage = '选定的麦克风不可用，已切换为默认设备，请重新尝试';
+                    } else {
+                        switch (error.name || error.message) {
+                            case 'NotAllowedError':
+                            case 'PermissionDeniedError':
+                                userMessage = '请允许访问摄像头和麦克风权限，然后刷新页面重试';
+                                break;
+                            case 'NotFoundError':
+                            case 'DevicesNotFoundError':
+                                userMessage = '未检测到摄像头或麦克风设备，请检查设备连接';
+                                break;
+                            case 'NotReadableError':
+                            case 'TrackStartError':
+                                userMessage = '摄像头或麦克风被其他应用占用，请关闭其他应用后重试';
+                                break;
+                            case 'UNSUPPORTED_BROWSER':
+                                userMessage = '当前浏览器版本过低，请升级到最新版本';
+                                break;
+                            default:
+                                userMessage = '媒体设备访问失败，请检查设备权限和连接状态';
+                        }
                     }
 
                     this.messages.push({
@@ -1055,13 +1313,16 @@
                     });
 
                     // 显示重试按钮（通过消息形式）
-                    setTimeout(() => {
-                        this.messages.push({
-                            role: "assistant",
-                            content: "💡 解决方法：\n1. 检查浏览器权限设置\n2. 确保设备未被其他应用占用\n3. 刷新页面重新尝试"
-                        });
-                        this.$nextTick(() => { this.scrollToBottom(); });
-                    }, 1000);
+                    if (!this.mediaErrorHintShown) {
+                        this.mediaErrorHintShown = true;
+                        setTimeout(() => {
+                            this.messages.push({
+                                role: "assistant",
+                                content: "💡 解决方法：\n1. 检查浏览器权限设置\n2. 确保设备未被其他应用占用\n3. 刷新页面重新尝试"
+                            });
+                            this.$nextTick(() => { this.scrollToBottom(); });
+                        }, 1000);
+                    }
                 },
                 async enumerateVideoInputs() {
                     try {
@@ -1110,6 +1371,78 @@
                         }
                     } catch (e) {
                         console.warn('枚举音频设备失败:', e);
+                    }
+                },
+
+                async refreshAudioDevices() {
+                    await this.enumerateAudioInputs();
+                    await this.enumerateVideoInputs();
+                },
+
+                async handleAudioDeviceChange() {
+                    try {
+                        await this.changeAudioInput();
+                    } catch (error) {
+                        console.error('切换麦克风失败:', error);
+                        this.messages.push({ role: 'assistant', content: `切换麦克风失败：${this.getCameraErrorMessage(error)}` });
+                        this.$nextTick(() => { this.scrollToBottom(); });
+                    }
+                },
+
+                async changeAudioInput() {
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+
+                    // 若当前流不存在，直接重新初始化
+                    if (!this.localStream) {
+                        await this.initializeMedia();
+                        return;
+                    }
+
+                    const newStream = await navigator.mediaDevices.getUserMedia({
+                        audio: this.buildAudioConstraints(),
+                        video: false
+                    });
+
+                    const newAudioTrack = newStream.getAudioTracks()[0];
+                    if (!newAudioTrack) {
+                        throw new Error('未获取到新的音频轨道');
+                    }
+
+                    // 保持原有启用状态（兼容按住说话）
+                    newAudioTrack.enabled = this.audioTrackEnabled;
+
+                    // 替换 RTCPeerConnection 发送轨
+                    if (this.pc) {
+                        const senders = this.pc.getSenders();
+                        const audioSender = senders.find(s => s.track && s.track.kind === 'audio');
+                        if (audioSender) {
+                            await audioSender.replaceTrack(newAudioTrack);
+                        }
+                    }
+
+                    // 替换本地流中的音频轨
+                    const oldAudioTracks = this.localStream.getAudioTracks();
+                    oldAudioTracks.forEach(track => {
+                        this.localStream.removeTrack(track);
+                        track.stop();
+                    });
+                    this.localStream.addTrack(newAudioTrack);
+
+                    // 释放新流中未使用的轨道
+                    newStream.getTracks().forEach(t => {
+                        if (t !== newAudioTrack) t.stop();
+                    });
+
+                    // 若按住说话模式且当前未按下，确保禁用新轨道
+                    if (this.voiceMode === 'push-to-talk' && !this.isPushToTalkActive) {
+                        this.disableAudioTrack();
+                    }
+                },
+
+                handleSpeakerChange() {
+                    this.applySpeakerDevice(this.$refs.remoteVideo);
+                    if (this.currentAudio) {
+                        this.applySpeakerDevice(this.currentAudio);
                     }
                 },
 
@@ -1206,6 +1539,27 @@
                     // 滚动时更新滚动状态
                     this.checkScrollableContent();
                 },
+                async waitForIceGatheringComplete(pc, timeoutMs = 3000) {
+                    if (!pc || pc.iceGatheringState === 'complete') return;
+
+                    await new Promise((resolve) => {
+                        let timeoutId = null;
+                        const checkState = () => {
+                            if (pc.iceGatheringState === 'complete') {
+                                if (timeoutId) clearTimeout(timeoutId);
+                                pc.removeEventListener('icegatheringstatechange', checkState);
+                                resolve();
+                            }
+                        };
+
+                        timeoutId = setTimeout(() => {
+                            pc.removeEventListener('icegatheringstatechange', checkState);
+                            resolve();
+                        }, timeoutMs);
+
+                        pc.addEventListener('icegatheringstatechange', checkState);
+                    });
+                },
                 async negotiate() {
                     try {
                         if (!this.pc) return;
@@ -1216,18 +1570,21 @@
 
                         await this.pc.setLocalDescription(offer);
 
-                        // 优化：不等待ICE收集完成，直接发送offer
-                        // 这可以显著减少连接建立时间
+                        // 等待 ICE 收集完成，确保 STUN/TURN 候选写入 SDP
+                        await this.waitForIceGatheringComplete(this.pc);
 
                         if (!this.pc) return;
                         this.isLoadingOffer = true;
+
+                        const localDescription = this.pc.localDescription;
+                        if (!localDescription) return;
 
                         const response = await fetch('/api/offer', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                sdp: this.pc.localDescription.sdp,
-                                type: this.pc.localDescription.type,
+                                sdp: localDescription.sdp,
+                                type: localDescription.type,
                                 macAddress: this.macAddress,
                             })
                         });
@@ -1560,7 +1917,7 @@
 
                 // 应用选择的扬声器设备到音频元素
                 applySpeakerDevice(audioElement) {
-                    if (!this.selectedSpeakerDeviceId || !audioElement) return;
+                    if (!this.supportSinkId || !this.selectedSpeakerDeviceId || !audioElement) return;
 
                     try {
                         // 检查浏览器是否支持 setSinkId

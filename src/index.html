@@ -559,6 +559,14 @@
                     this.validateMacAddress();
                 },
                 async enumerateAudioDevices() {
+                    const ensureSelectionValid = () => {
+                        if (this.selectedAudioDeviceId && !this.audioInputDevices.some(d => d.deviceId === this.selectedAudioDeviceId)) {
+                            this.selectedAudioDeviceId = '';
+                        }
+                        if (this.selectedSpeakerDeviceId && !this.audioOutputDevices.some(d => d.deviceId === this.selectedSpeakerDeviceId)) {
+                            this.selectedSpeakerDeviceId = '';
+                        }
+                    };
                     try {
                         // 首先请求麦克风权限以获取设备标签
                         await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -585,6 +593,8 @@
                         if (!this.selectedSpeakerDeviceId && this.audioOutputDevices.length > 0) {
                             this.selectedSpeakerDeviceId = this.audioOutputDevices[0].deviceId;
                         }
+
+                        ensureSelectionValid();
                     } catch (e) {
                         console.warn('枚举音频设备失败:', e);
                         // 即使权限被拒绝，也尝试枚举设备（但可能没有标签）
@@ -592,6 +602,7 @@
                             const devices = await navigator.mediaDevices.enumerateDevices();
                             this.audioInputDevices = devices.filter(d => d.kind === 'audioinput' && d.deviceId !== '');
                             this.audioOutputDevices = devices.filter(d => d.kind === 'audiooutput' && d.deviceId !== '');
+                            ensureSelectionValid();
                         } catch (enumError) {
                             console.warn('设备枚举失败:', enumError);
                         }

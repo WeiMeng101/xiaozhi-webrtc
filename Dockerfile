@@ -28,6 +28,10 @@ COPY ./main.py ./main.py
 
 EXPOSE 51000
 
-ENV PORT=51000
+ENV PORT=51000 \
+      TURN_SERVER_URL=turn:xiaozhi.wei2000.cn:3478?transport=udp \
+      ENABLE_DEFAULT_TURN_SERVERS=false \
+      TURN_USERNAME=wei2000 \
+      TURN_PASSWORD=wei2000
 
 CMD ["uv", "run", "main.py"]

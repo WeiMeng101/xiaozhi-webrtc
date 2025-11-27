@@ -1,0 +1,51 @@
+FROM alpine:3.19
+
+# 使用阿里云镜像源以避免拉取失败
+RUN echo "https://mirrors.aliyun.com/alpine/v3.19/main" > /etc/apk/repositories && \
+    echo "https://mirrors.aliyun.com/alpine/v3.19/community" >> /etc/apk/repositories && \
+    apk add --no-cache coturn
+
+# 默认环境变量（运行时可覆盖）
+ENV REALM=xiaozhi.wei2000.cn \
+    TURN_PORT=3478 \
+    MIN_PORT=49160 \
+    MAX_PORT=49200 \
+    TURN_USER=turnuser \
+    TURN_PASS=turnpass \
+    LISTENING_IP=0.0.0.0 \
+    RELAY_IP=0.0.0.0 \
+    EXTERNAL_IP=0.0.0.0
+
+# 运行时用环境变量渲染 turnserver.conf
+RUN mkdir -p /etc/coturn
+COPY <<'EOF' /entrypoint.sh
+#!/bin/sh
+
+cat > /etc/coturn/turnserver.conf <<CONF
+fingerprint
+lt-cred-mech
+realm=${REALM}
+user=${TURN_USER}:${TURN_PASS}
+no-cli
+no-tcp
+listening-port=${TURN_PORT}
+min-port=${MIN_PORT}
+max-port=${MAX_PORT}
+# 如有多网卡可指定：
+CONF
+
+exec /usr/bin/turnserver \
+  -c /etc/coturn/turnserver.conf \
+  --prod \
+  --no-tls --no-dtls \
+  --listening-ip=${LISTENING_IP:-0.0.0.0} \
+  --relay-ip=${RELAY_IP:-0.0.0.0} \
+  --external-ip=${EXTERNAL_IP:-0.0.0.0}
+EOF
+RUN chmod +x /entrypoint.sh
+
+# 按默认 3478 端口暴露
+EXPOSE 3478/udp
+EXPOSE 49160-49200/udp
+
+ENTRYPOINT ["/entrypoint.sh"]
